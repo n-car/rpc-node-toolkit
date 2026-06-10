@@ -6,12 +6,17 @@ This package is the planned Node.js core for the RPC Toolkit ecosystem. It is in
 
 ## Project Status
 
-Early development scaffold.
+Early development package.
 
-- The npm package name `rpc-node-toolkit` is currently unclaimed based on `npm view rpc-node-toolkit` returning `E404 Not Found` on 2026-06-10.
-- This package is not published to npm yet.
+- Published on npm as `rpc-node-toolkit`.
 - Express adapter extraction is planned after the core API is reviewed.
 - Standard JSON-RPC 2.0 remains the default behavior.
+
+## Installation
+
+```bash
+npm install rpc-node-toolkit
+```
 
 ## Current Scope
 
