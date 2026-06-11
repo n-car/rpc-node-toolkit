@@ -1,6 +1,6 @@
 {
   "name": "rpc-node-toolkit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Framework-agnostic Node.js JSON-RPC 2.0 toolkit with HTTP handler support, schema validation, and RPC Toolkit Safe Mode.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -56,6 +56,6 @@
   "dependencies": {
     "ajv": "^8.20.0",
     "ajv-formats": "^2.1.1",
-    "rpc-toolkit-js-client": "https://github.com/n-car/rpc-toolkit-js-client/archive/refs/tags/v1.1.0.tar.gz"
+    "rpc-toolkit-js-client": "^1.1.2"
   }
 }
