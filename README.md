@@ -2,7 +2,7 @@
 
 Framework-agnostic JSON-RPC 2.0 toolkit for Node.js.
 
-This package is the planned Node.js core for the RPC Toolkit ecosystem. It is intended to host the shared server-side JSON-RPC logic used by framework adapters such as `rpc-express-toolkit`, while also supporting plain `node:http` servers directly.
+This package is the early Node.js core for the RPC Toolkit ecosystem. It hosts framework-independent JSON-RPC logic and can also support plain `node:http` servers directly.
 
 ## Project Status
 
