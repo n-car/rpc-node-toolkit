@@ -44,7 +44,10 @@
     "safe-mode",
     "rpc-toolkit"
   ],
-  "author": "Nicola Carpanese <nicola.carpanese@gmail.com>",
+  "author": {
+    "name": "Nicola Carpanese",
+    "url": "https://github.com/n-car"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/n-car/rpc-node-toolkit/issues"

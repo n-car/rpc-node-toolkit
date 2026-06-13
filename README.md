@@ -2,15 +2,15 @@
 
 Framework-agnostic JSON-RPC 2.0 toolkit for Node.js.
 
-This package is the early Node.js core for the RPC Toolkit ecosystem. It hosts framework-independent JSON-RPC logic and can also support plain `node:http` servers directly.
+This package is the framework-agnostic Node.js core for the RPC Toolkit ecosystem. It hosts framework-independent JSON-RPC logic and supports plain `node:http` servers directly.
 
 ## Project Status
 
-Early development package.
-
 - Published on npm as `rpc-node-toolkit`.
-- Express adapter extraction is planned after the core API is reviewed.
+- Plain `node:http` server support is implemented through `createHttpHandler`.
+- Express integration remains available in `rpc-express-toolkit`.
 - Standard JSON-RPC 2.0 remains the default behavior.
+- Safe Mode HTTP interoperability is covered by the ecosystem validation matrix.
 
 ## Installation
 
@@ -94,12 +94,22 @@ const rpc = new RpcSafeEndpoint();
 
 Safe Mode enables `X-RPC-Safe-Enabled` negotiation and recursive value encoding/decoding for strings, dates, and BigInt values.
 
+## Examples
+
+See [`examples/http-server.js`](examples/http-server.js) for a runnable plain `node:http` server.
+
+```bash
+node examples/http-server.js
+```
+
 ## Local Development
 
 ```bash
 npm install
 npm test
 ```
+
+The package test suite covers the core endpoint, HTTP handler, schema validation, batch requests, notifications, and Safe Mode behavior. The ecosystem compatibility matrix also covers `rpc-node-toolkit` as an HTTP Safe Mode server.
 
 ## Related Projects
 
