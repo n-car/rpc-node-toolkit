@@ -103,10 +103,18 @@ Safe Mode enables `X-RPC-Safe-Enabled` negotiation and recursive value encoding/
 
 ## Examples
 
-See [`examples/http-server.js`](examples/http-server.js) for a runnable plain `node:http` server.
+Runnable examples are available in [`examples/`](examples/):
+
+- [`http-server.js`](examples/http-server.js) - long-running plain `node:http` endpoint on `/api`.
+- [`batch-and-notification.js`](examples/batch-and-notification.js) - in-process server/client example for batch requests and notifications.
+- [`schema-validation.js`](examples/schema-validation.js) - method schema validation and JSON-RPC error handling.
+- [`safe-mode-roundtrip.js`](examples/safe-mode-roundtrip.js) - `RpcSafeClient` to `RpcSafeEndpoint` round-trip for strings, dates, BigInt, arrays, and nested objects.
 
 ```bash
-node examples/http-server.js
+npm run example:http
+npm run example:batch
+npm run example:schema
+npm run example:safe
 ```
 
 ## Local Development

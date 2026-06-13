@@ -24,6 +24,10 @@
   ],
   "scripts": {
     "test": "node --test",
+    "example:http": "node examples/http-server.js",
+    "example:batch": "node examples/batch-and-notification.js",
+    "example:schema": "node examples/schema-validation.js",
+    "example:safe": "node examples/safe-mode-roundtrip.js",
     "prepack": "npm test"
   },
   "repository": {
