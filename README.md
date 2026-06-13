@@ -12,6 +12,13 @@ This package is the framework-agnostic Node.js core for the RPC Toolkit ecosyste
 - Standard JSON-RPC 2.0 remains the default behavior.
 - Safe Mode HTTP interoperability is covered by the ecosystem validation matrix.
 
+## Which Package Should I Use?
+
+- Use `rpc-node-toolkit` if you want framework-agnostic Node.js or plain `node:http`.
+- Use [`rpc-express-toolkit`](https://github.com/n-car/rpc-express-toolkit) if you are building directly on Express.
+- Use [`rpc-toolkit-js-client`](https://github.com/n-car/rpc-toolkit-js-client) if you only need a browser or Node.js client.
+- Use [`rpc-toolkit`](https://github.com/n-car/rpc-toolkit) as the ecosystem hub and compatibility reference.
+
 ## Installation
 
 ```bash
