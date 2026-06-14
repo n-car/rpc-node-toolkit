@@ -19,6 +19,7 @@ This package is the framework-agnostic Node.js core for the RPC Toolkit ecosyste
 - Express integration remains available in `rpc-express-toolkit`.
 - Standard JSON-RPC 2.0 remains the default behavior.
 - Safe Mode HTTP interoperability is covered by the ecosystem validation matrix.
+- The package remains beta while the standalone Node API and framework-agnostic adapter surface settle across more usage.
 
 ## Which Package Should I Use?
 
