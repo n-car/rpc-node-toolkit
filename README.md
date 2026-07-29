@@ -34,6 +34,87 @@ This package is the framework-agnostic Node.js core for the RPC Toolkit ecosyste
 npm install rpc-node-toolkit
 ```
 
+Requirements:
+
+- Node.js 18+
+
+## Compatibility
+
+`rpc-node-toolkit` is tested with Node.js 18, 20, and 22. Its CommonJS
+runtime supports both CommonJS and Node.js ESM consumers. See
+[Compatibility](docs/COMPATIBILITY.md) for the runtime, module, and packaged
+consumer matrices.
+
+## TypeScript
+
+The package supports TypeScript ESM/NodeNext and CommonJS consumers. Both
+forms are tested with `strict: true`, `skipLibCheck: false`, and
+`esModuleInterop: false` against the tarball produced by `npm pack`.
+
+Install the declarations used by these examples:
+
+```bash
+npm install --save-dev typescript @types/node
+```
+
+ESM/NodeNext (`package.json` contains `"type": "module"`):
+
+```typescript
+import RpcEndpoint, {
+  RpcEndpoint as NamedRpcEndpoint,
+  RpcClient,
+  type RpcEndpointOptions,
+} from 'rpc-node-toolkit';
+import {
+  RpcSafeClient,
+  RpcSafeEndpoint,
+} from 'rpc-node-toolkit/safe';
+
+const options: RpcEndpointOptions = { safeEnabled: false };
+const rpc = new RpcEndpoint({}, options);
+const namedRpc = new NamedRpcEndpoint({}, options);
+const client = new RpcClient('http://localhost:3000/api');
+const safeRpc = new RpcSafeEndpoint({});
+const safeClient = new RpcSafeClient('http://localhost:3000/api');
+```
+
+Use these compiler options for the ESM example:
+
+```json
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": false,
+    "esModuleInterop": false,
+    "types": ["node"],
+    "ignoreDeprecations": "6.0"
+  }
+}
+```
+
+`ignoreDeprecations` only acknowledges TypeScript 6's deprecation notice for
+the explicitly tested `esModuleInterop: false` setting.
+
+CommonJS TypeScript (`.cts` with NodeNext or Node16 resolution):
+
+```typescript
+import RpcEndpoint = require('rpc-node-toolkit');
+import Safe = require('rpc-node-toolkit/safe');
+
+const options: RpcEndpoint.RpcEndpointOptions = { safeEnabled: false };
+const rpc = new RpcEndpoint({}, options);
+const namedRpc = new RpcEndpoint.RpcEndpoint({}, options);
+const client = new RpcEndpoint.RpcClient('http://localhost:3000/api');
+const safeRpc = new Safe.RpcSafeEndpoint({});
+const safeClient = new Safe.RpcSafeClient('http://localhost:3000/api');
+```
+
+The root CommonJS import remains the constructable `RpcEndpoint` export while
+also exposing its named API. The `/safe` subpath exposes the safe classes and
+the root utilities it re-exports at runtime.
+
 ## Current Scope
 
 - Framework-independent `RpcEndpoint`
@@ -131,9 +212,15 @@ npm run example:safe
 ```bash
 npm install
 npm test
+npm run typecheck
+npm run package-test
 ```
 
 The package test suite covers the core endpoint, HTTP handler, schema validation, batch requests, notifications, and Safe Mode behavior. The ecosystem compatibility matrix also covers `rpc-node-toolkit` as an HTTP Safe Mode server.
+
+`npm run package-test` validates TypeScript and Node.js consumers against the
+tarball produced by `npm pack`, including the package export map and the files
+that would be published.
 
 ## Related Projects
 
