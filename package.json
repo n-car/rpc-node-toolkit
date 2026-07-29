@@ -1,9 +1,10 @@
 {
   "name": "rpc-node-toolkit",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Framework-agnostic Node.js JSON-RPC 2.0 toolkit with HTTP handler support, schema validation, and RPC Toolkit Safe Mode.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
+  "type": "commonjs",
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
@@ -11,7 +12,7 @@
       "import": "./src/index.js"
     },
     "./safe": {
-      "types": "./src/index.d.ts",
+      "types": "./src/safe.d.ts",
       "require": "./src/safe.js",
       "import": "./src/safe.js"
     }
@@ -19,16 +20,20 @@
   "files": [
     "src/",
     "examples/",
+    "docs/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test",
+    "test": "node --test test/core.test.js",
     "example:http": "node examples/http-server.js",
     "example:batch": "node examples/batch-and-notification.js",
     "example:schema": "node examples/schema-validation.js",
     "example:safe": "node examples/safe-mode-roundtrip.js",
-    "prepack": "npm test"
+    "typecheck": "node test/package/runner.js --types-only",
+    "package-test": "node test/package/runner.js",
+    "prepack": "npm test",
+    "prepublishOnly": "npm run package-test"
   },
   "repository": {
     "type": "git",
@@ -59,6 +64,12 @@
   "homepage": "https://github.com/n-car/rpc-node-toolkit#readme",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@types/node": "^18.19.0",
+    "publint": "^0.3.22",
+    "typescript": "~6.0.3"
   },
   "dependencies": {
     "ajv": "^8.20.0",
