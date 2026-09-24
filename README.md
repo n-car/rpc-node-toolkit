@@ -146,6 +146,24 @@ const server = http.createServer(
 server.listen(3000, '0.0.0.0');
 ```
 
+Middleware and handlers share the final per-request context. A handler may accept
+`(request, applicationContext, params, requestContext, callContext)`; middleware
+changes to `applicationContext`, `requestContext`, or the result of `afterCall`
+are propagated.
+
+For a hardened endpoint that does not need batch or introspection:
+
+```js
+const rpc = new RpcEndpoint(null, {
+  enableBatch: false,
+  maxBatchSize: 25,
+  enableIntrospection: false,
+});
+```
+
+Batch remains enabled by default for JSON-RPC compatibility and is limited to
+100 items unless `maxBatchSize` is configured.
+
 Request:
 
 ```json

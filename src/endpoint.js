@@ -37,6 +37,11 @@ class RpcEndpoint {
       strictMode: options.strictMode !== false,
       enableIntrospection: options.enableIntrospection === true,
       introspectionPrefix: options.introspectionPrefix || '__rpc',
+      enableBatch: options.enableBatch !== false,
+      maxBatchSize:
+        Number.isInteger(options.maxBatchSize) && options.maxBatchSize > 0
+          ? options.maxBatchSize
+          : 100,
       maxSerializationDepth: options.maxSerializationDepth,
       maxDeserializationDepth: options.maxDeserializationDepth,
       validation: options.validation || {},
@@ -92,7 +97,7 @@ class RpcEndpoint {
 
     this.addMethod(`${prefix}.capabilities`, () => ({
       jsonrpc: '2.0',
-      batch: true,
+      batch: this.options.enableBatch,
       notifications: true,
       introspection: true,
       safeMode: this.options.safeEnabled,
@@ -223,6 +228,28 @@ class RpcEndpoint {
       };
     }
 
+    if (!this.options.enableBatch) {
+      return {
+        status: 200,
+        headers,
+        body: makeResponse(null, undefined, {
+          code: -32600,
+          message: 'Invalid Request: Batch requests are not enabled',
+        }),
+      };
+    }
+
+    if (batch.length > this.options.maxBatchSize) {
+      return {
+        status: 200,
+        headers,
+        body: makeResponse(null, undefined, {
+          code: -32600,
+          message: `Invalid Request: Batch size exceeds maximum of ${this.options.maxBatchSize}`,
+        }),
+      };
+    }
+
     const results = await Promise.all(
       batch.map((request, batchIndex) =>
         this.#processSingle(request, { ...requestContext, batchIndex })
@@ -339,12 +366,22 @@ class RpcEndpoint {
         );
       }
 
-      const result = await Promise.resolve(
-        handler(request, this.context, middlewareContext.params, requestContext)
+      let result = await Promise.resolve(
+        handler(
+          request,
+          middlewareContext.context,
+          middlewareContext.params,
+          middlewareContext.requestContext,
+          middlewareContext
+        )
       );
 
       middlewareContext.result = result;
-      await this.middleware.execute('afterCall', middlewareContext);
+      middlewareContext = await this.middleware.execute(
+        'afterCall',
+        middlewareContext
+      );
+      result = middlewareContext.result;
 
       if (envelope.isNotification) {
         return null;

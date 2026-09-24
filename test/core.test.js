@@ -71,6 +71,80 @@ test('handles batch requests and filters notifications', async () => {
   ]);
 });
 
+test('can disable batch requests', async () => {
+  const rpc = new RpcEndpoint(null, { enableBatch: false });
+  rpc.addMethod('echo', (_request, _context, params) => params);
+
+  const response = await rpc.handlePayload([
+    { jsonrpc: '2.0', method: 'echo', id: 1 },
+  ]);
+
+  assert.equal(response.body.error.code, -32600);
+  assert.match(response.body.error.message, /not enabled/);
+});
+
+test('enforces the configured maximum batch size', async () => {
+  const rpc = new RpcEndpoint(null, { maxBatchSize: 1 });
+  rpc.addMethod('echo', (_request, _context, params) => params);
+
+  const response = await rpc.handlePayload([
+    { jsonrpc: '2.0', method: 'echo', id: 1 },
+    { jsonrpc: '2.0', method: 'echo', id: 2 },
+  ]);
+
+  assert.equal(response.body.error.code, -32600);
+  assert.match(response.body.error.message, /maximum of 1/);
+});
+
+test('passes final middleware contexts to handlers', async () => {
+  const rpc = new RpcEndpoint({ appName: 'original' });
+  rpc.use('beforeCall', (callContext) => ({
+    ...callContext,
+    context: { appName: 'changed' },
+    requestContext: { ...callContext.requestContext, user: { id: 7 } },
+  }));
+  rpc.addMethod('context.read', (
+    _request,
+    context,
+    _params,
+    requestContext,
+    callContext
+  ) => ({
+    appName: context.appName,
+    userId: requestContext.user.id,
+    method: callContext.method,
+  }));
+
+  const response = await rpc.handlePayload({
+    jsonrpc: '2.0',
+    method: 'context.read',
+    id: 1,
+  });
+
+  assert.deepEqual(response.body.result, {
+    appName: 'changed',
+    userId: 7,
+    method: 'context.read',
+  });
+});
+
+test('uses a result transformed by afterCall middleware', async () => {
+  const rpc = new RpcEndpoint();
+  rpc.use('afterCall', (callContext) => ({
+    ...callContext,
+    result: 'wrapped',
+  }));
+  rpc.addMethod('result.read', () => 'original');
+
+  const response = await rpc.handlePayload({
+    jsonrpc: '2.0',
+    method: 'result.read',
+    id: 1,
+  });
+
+  assert.equal(response.body.result, 'wrapped');
+});
+
 test('enforces Safe Mode header in strict mode', async () => {
   const rpc = new RpcSafeEndpoint();
   rpc.addMethod('echo', (_request, _context, params) => params);

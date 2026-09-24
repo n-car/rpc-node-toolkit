@@ -112,6 +112,8 @@ declare namespace RpcEndpoint {
     strictMode?: boolean;
     enableIntrospection?: boolean;
     introspectionPrefix?: string;
+    enableBatch?: boolean;
+    maxBatchSize?: number;
     maxSerializationDepth?: number;
     maxDeserializationDepth?: number;
     validation?: SchemaValidatorOptions;
@@ -144,7 +146,8 @@ declare namespace RpcEndpoint {
     request: JsonRpcRequest,
     context: C,
     params: unknown,
-    requestContext: RpcRequestContext
+    requestContext: RpcRequestContext,
+    callContext?: RpcHandlerContext<C>
   ) => unknown | Promise<unknown>;
 
   export interface RpcMethodConfig<C = unknown> {
