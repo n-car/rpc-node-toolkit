@@ -5,7 +5,6 @@
 [![npm downloads](https://img.shields.io/npm/dm/rpc-node-toolkit.svg)](https://www.npmjs.com/package/rpc-node-toolkit)
 [![node](https://img.shields.io/node/v/rpc-node-toolkit.svg)](https://www.npmjs.com/package/rpc-node-toolkit)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-beta-yellow.svg)](https://github.com/n-car/rpc-node-toolkit/releases)
 
 Framework-agnostic JSON-RPC 2.0 toolkit for Node.js.
 
@@ -13,13 +12,12 @@ This package is the framework-agnostic Node.js core for the RPC Toolkit ecosyste
 
 ## Project Status
 
-- Beta package with the framework-agnostic Node HTTP core implemented.
-- Published on npm as `rpc-node-toolkit`.
-- Plain `node:http` server support is implemented through `createHttpHandler`.
-- Express integration remains available in `rpc-express-toolkit`.
-- Standard JSON-RPC 2.0 remains the default behavior.
-- Safe Mode HTTP interoperability is covered by the ecosystem validation matrix.
-- The beta label describes API stability while the standalone Node API and adapter surface settle across more usage; releases are CI tested and published to npm.
+The framework-agnostic Node HTTP core is implemented, published on npm as
+`rpc-node-toolkit`, and CI tested. Standard JSON-RPC 2.0 is the default;
+Safe Mode HTTP interoperability is covered by the ecosystem validation matrix.
+Express integration remains available in `rpc-express-toolkit`.
+
+The public API remains on the `0.x` version line and may evolve before `1.0.0`.
 
 ## Which Package Should I Use?
 
