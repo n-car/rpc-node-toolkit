@@ -19,7 +19,7 @@ This package is the framework-agnostic Node.js core for the RPC Toolkit ecosyste
 - Express integration remains available in `rpc-express-toolkit`.
 - Standard JSON-RPC 2.0 remains the default behavior.
 - Safe Mode HTTP interoperability is covered by the ecosystem validation matrix.
-- The package remains beta while the standalone Node API and framework-agnostic adapter surface settle across more usage.
+- The beta label describes API stability while the standalone Node API and adapter surface settle across more usage; releases are CI tested and published to npm.
 
 ## Which Package Should I Use?
 
@@ -40,7 +40,7 @@ Requirements:
 
 ## Compatibility
 
-`rpc-node-toolkit` is tested with Node.js 18, 20, and 22. Its CommonJS
+`rpc-node-toolkit` is tested with Node.js 18, 20, 22, 24, and 26. Its CommonJS
 runtime supports both CommonJS and Node.js ESM consumers. See
 [Compatibility](docs/COMPATIBILITY.md) for the runtime, module, and packaged
 consumer matrices.
@@ -239,6 +239,9 @@ The package test suite covers the core endpoint, HTTP handler, schema validation
 `npm run package-test` validates TypeScript and Node.js consumers against the
 tarball produced by `npm pack`, including the package export map and the files
 that would be published.
+It also checks that regular files in the tarball have mode `0644`, preventing
+accidental executable permissions when publishing from a Windows-mounted
+filesystem.
 
 ## Related Projects
 

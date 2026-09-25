@@ -210,6 +210,18 @@ function assertPackedFiles(packResult) {
   }
 }
 
+function assertPackedModes(packResult) {
+  const invalidFiles = packResult.files.filter((file) => file.mode !== 0o644);
+
+  if (invalidFiles.length > 0) {
+    throw new Error(
+      `Package contains files without mode 0644: ${invalidFiles
+        .map((file) => `${file.path} (${file.mode.toString(8)})`)
+        .join(', ')}. Pack and publish from a native Linux filesystem.`
+    );
+  }
+}
+
 function removeTemporaryDirectory(directory) {
   const resolvedDirectory = resolve(directory);
   const temporaryRoot = `${resolve(tmpdir())}${sep}`;
@@ -259,6 +271,7 @@ function executePackageTests() {
     });
 
     assertPackedFiles(packResult);
+    assertPackedModes(packResult);
 
     const archivePath = join(temporaryDirectory, packResult.filename);
     if (!existsSync(archivePath)) {

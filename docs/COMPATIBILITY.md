@@ -10,9 +10,11 @@ servers and clients.
 | Node.js 18.x | Supported and CI tested |
 | Node.js 20.x | Supported and CI tested |
 | Node.js 22.x | Supported and CI tested |
+| Node.js 24.x | Supported and CI tested |
+| Node.js 26.x | Supported and CI tested |
 
 The package requires Node.js 18 or newer. The GitHub Actions matrix runs the
-runtime test suite across Node.js 18, 20, and 22.
+runtime test suite across Node.js 18, 20, 22, 24, and 26.
 
 ## Module And TypeScript Compatibility
 
@@ -54,6 +56,7 @@ The same validation checks the packed artifact with `publint --strict` and
 
 Package validation runs in a dedicated Node.js 20 CI job and as part of
 `prepublishOnly`, so declaration or packaging regressions block publication.
+It also rejects tarballs with file modes other than `0644`.
 
 ## Compatibility Coverage
 
