@@ -5,6 +5,7 @@ const context = { consumer: 'commonjs' };
 const options: RpcEndpoint.RpcEndpointOptions = {
   safeEnabled: false,
   strictMode: true,
+  sanitizeErrors: true,
 };
 const clientOptions: RpcEndpoint.RpcClientOptions = { safeEnabled: false };
 const batch: Safe.RpcBatchRequest[] = [{ method: 'ping', id: 1 }];

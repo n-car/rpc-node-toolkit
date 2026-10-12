@@ -7,14 +7,16 @@ servers and clients.
 
 | Runtime | Status |
 | --- | --- |
-| Node.js 18.x | Supported and CI tested |
-| Node.js 20.x | Supported and CI tested |
-| Node.js 22.x | Supported and CI tested |
-| Node.js 24.x | Supported and CI tested |
-| Node.js 26.x | Supported and CI tested |
+| Node.js 18.x | Supported; configured CI target |
+| Node.js 20.x | Supported; configured CI target |
+| Node.js 22.x | Supported; configured CI target |
+| Node.js 24.x | Supported; configured CI target |
+| Node.js 26.x | Supported; configured CI target |
 
-The package requires Node.js 18 or newer. The GitHub Actions matrix runs the
-runtime test suite across Node.js 18, 20, 22, 24, and 26.
+The package requires Node.js 18 or newer. The GitHub Actions matrix is configured
+to run the runtime test suite across Node.js 18, 20, 22, 24, and 26. This is the
+configured coverage, not a claim that every target has been rerun for the
+0.2.2 release.
 
 ## Module And TypeScript Compatibility
 
@@ -66,7 +68,9 @@ The runtime tests cover:
 - plain `node:http` handling;
 - method schema validation;
 - batch requests and notifications;
-- Safe Mode serialization and HTTP behavior.
+- Safe Mode serialization and HTTP behavior;
+- invalid request envelopes, null IDs/results, and notification isolation;
+- default error sanitization, intentional public errors, and the debug opt-out.
 
 The isolated packaged consumers separately cover module resolution, runtime
 exports, and TypeScript declaration compatibility.

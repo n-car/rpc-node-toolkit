@@ -25,6 +25,7 @@ declare class RpcEndpoint<C = unknown> {
       RpcEndpoint.RpcEndpointOptions,
       | 'safeEnabled'
       | 'strictMode'
+      | 'sanitizeErrors'
       | 'enableIntrospection'
       | 'introspectionPrefix'
     >
@@ -110,6 +111,8 @@ declare namespace RpcEndpoint {
   export interface RpcEndpointOptions {
     safeEnabled?: boolean;
     strictMode?: boolean;
+    /** Hide unexpected error details by default. Disable only for local debugging. */
+    sanitizeErrors?: boolean;
     enableIntrospection?: boolean;
     introspectionPrefix?: string;
     enableBatch?: boolean;

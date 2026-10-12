@@ -86,9 +86,10 @@ function createHttpHandler(endpoint, options = {}) {
 
       sendJson(res, result.status, result.headers, result.body);
     } catch (error) {
+      const bodyTooLarge = error?.statusCode === 413;
       sendJson(
         res,
-        error.statusCode || 500,
+        bodyTooLarge ? 413 : 500,
         {
           'content-type': 'application/json',
         },
@@ -96,8 +97,13 @@ function createHttpHandler(endpoint, options = {}) {
           jsonrpc: '2.0',
           id: null,
           error: {
-            code: error.statusCode === 413 ? -32600 : -32603,
-            message: error.message || 'Internal error',
+            code: bodyTooLarge ? -32600 : -32603,
+            message: bodyTooLarge
+              ? 'Request body too large'
+              : endpoint.options?.sanitizeErrors === false &&
+                  typeof error?.message === 'string' && error.message
+                ? error.message
+                : 'Internal error',
           },
         }
       );

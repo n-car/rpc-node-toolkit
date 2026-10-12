@@ -35,6 +35,7 @@ class RpcEndpoint {
     this.options = {
       safeEnabled: options.safeEnabled === true,
       strictMode: options.strictMode !== false,
+      sanitizeErrors: options.sanitizeErrors !== false,
       enableIntrospection: options.enableIntrospection === true,
       introspectionPrefix: options.introspectionPrefix || '__rpc',
       enableBatch: options.enableBatch !== false,
@@ -176,7 +177,9 @@ class RpcEndpoint {
         body: makeResponse(null, undefined, {
           code: -32700,
           message: 'Parse error',
-          data: { message: error.message },
+          ...(!this.options.sanitizeErrors && {
+            data: { message: error.message },
+          }),
         }),
       };
     }
@@ -205,13 +208,7 @@ class RpcEndpoint {
       return {
         status: 200,
         headers,
-        body: makeResponse(null, undefined, {
-          code: error.code || -32603,
-          message: error.message || 'Internal error',
-          ...(error.data !== undefined && {
-            data: this.serializeBigIntsAndDates(error.data),
-          }),
-        }),
+        body: makeResponse(null, undefined, this.#formatError(error)),
       };
     }
   }
@@ -402,14 +399,28 @@ class RpcEndpoint {
         return null;
       }
 
-      return makeResponse(id, undefined, {
-        code: error.code || -32603,
-        message: error.message || 'Internal error',
-        ...(error.data !== undefined && {
-          data: this.serializeBigIntsAndDates(error.data),
-        }),
-      });
+      return makeResponse(id, undefined, this.#formatError(error));
     }
+  }
+
+  #formatError(error) {
+    const code = Number.isSafeInteger(error?.code) ? error.code : -32603;
+
+    // Coded application errors are deliberately public; unexpected failures are not.
+    if (this.options.sanitizeErrors && code === -32603) {
+      return { code: -32603, message: 'Internal error' };
+    }
+
+    return {
+      code,
+      message:
+        typeof error?.message === 'string' && error.message
+          ? error.message
+          : 'Internal error',
+      ...(error?.data !== undefined && {
+        data: this.serializeBigIntsAndDates(error.data),
+      }),
+    };
   }
 
   serializeBigIntsAndDates(value) {

@@ -28,6 +28,7 @@ const context = { consumer: 'esm' };
 const options: RpcEndpointOptions = {
   safeEnabled: false,
   strictMode: true,
+  sanitizeErrors: true,
 };
 const request: JsonRpcRequest = {
   jsonrpc: '2.0',

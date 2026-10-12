@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const http = require('node:http');
+const { Readable } = require('node:stream');
 const { test } = require('node:test');
 const {
   RpcEndpoint,
@@ -314,4 +315,172 @@ test('validates params against method schemas', async () => {
   assert.equal(invalid.body.error.message, 'Validation failed');
   assert.equal(Array.isArray(invalid.body.error.data.validationErrors), true);
   assert.equal(invalid.body.error.data.validationErrors.length > 0, true);
+});
+
+test('sanitizes unexpected errors and invalid RPC codes by default', async () => {
+  for (const code of [undefined, -32603, 'EACCES', '-32000', 1.5, NaN, Infinity, 2 ** 53]) {
+    const rpc = new RpcEndpoint();
+    const error = new Error('synthetic-secret: /private/service/config');
+    error.code = code;
+    error.data = { secret: 'synthetic-secret' };
+    rpc.addMethod('fail', () => { throw error; });
+
+    const response = await rpc.handlePayload({
+      jsonrpc: '2.0', method: 'fail', id: 1,
+    });
+
+    assert.deepEqual(response.body, {
+      jsonrpc: '2.0', id: 1,
+      error: { code: -32603, message: 'Internal error' },
+    });
+  }
+});
+
+test('handles non-Error throws without leaking values', async () => {
+  for (const value of [null, undefined, 'synthetic-secret']) {
+    const rpc = new RpcEndpoint();
+    rpc.addMethod('fail', () => { throw value; });
+    const response = await rpc.handlePayload({
+      jsonrpc: '2.0', method: 'fail', id: 1,
+    });
+    assert.deepEqual(response.body.error, { code: -32603, message: 'Internal error' });
+  }
+});
+
+test('preserves intentional application codes, messages, and public data', async () => {
+  for (const code of [-32602, -32001, 0, 42]) {
+    const rpc = new RpcEndpoint();
+    rpc.addMethod('fail', () => {
+      throw Object.assign(new Error('Access denied'), {
+        code, data: { reason: 'not-approved' },
+      });
+    });
+    const response = await rpc.handlePayload({
+      jsonrpc: '2.0', method: 'fail', id: 1,
+    });
+    assert.deepEqual(response.body.error, {
+      code, message: 'Access denied', data: { reason: 'not-approved' },
+    });
+  }
+});
+
+test('preserves Safe Mode serialization of application error data only', async () => {
+  const rpc = new RpcSafeEndpoint();
+  rpc.addMethod('fail', () => {
+    throw Object.assign(new Error('Access denied'), {
+      code: -32001, data: { reason: 'not-approved', count: 42n },
+    });
+  });
+  const response = await rpc.handlePayload(
+    { jsonrpc: '2.0', method: 'fail', id: 'request-id' },
+    { headers: { 'x-rpc-safe-enabled': 'true' } }
+  );
+  assert.deepEqual(response.body, {
+    jsonrpc: '2.0', id: 'request-id',
+    error: {
+      code: -32001, message: 'Access denied',
+      data: { reason: 'S:not-approved', count: '42n' },
+    },
+  });
+});
+
+test('sanitizes middleware errors while retaining the original for onError', async () => {
+  for (const hook of ['beforeCall', 'beforeValidation', 'afterValidation', 'afterCall']) {
+    const rpc = new RpcEndpoint();
+    const failure = Object.assign(new Error('synthetic-secret'), {
+      data: { secret: 'synthetic-secret' },
+    });
+    let observed;
+    rpc.use(hook, () => { throw failure; });
+    rpc.use('onError', ({ error }) => {
+      observed = error;
+      throw new Error('secondary-secret');
+    });
+    rpc.addMethod('fail', { handler: () => 'ok', schema: { type: 'object' } });
+    const response = await rpc.handlePayload({
+      jsonrpc: '2.0', method: 'fail', params: {}, id: 1,
+    });
+    assert.equal(observed, failure);
+    assert.deepEqual(response.body.error, { code: -32603, message: 'Internal error' });
+  }
+});
+
+test('sanitizes outer serialization failures and omits JSON parser details', async () => {
+  const rpc = new RpcEndpoint();
+  rpc.addMethod('echo', (_request, _context, params) => params);
+  const params = {};
+  params.circular = params;
+  const failed = await rpc.handlePayload({
+    jsonrpc: '2.0', method: 'echo', params, id: 1,
+  });
+  assert.deepEqual(failed.body.error, { code: -32603, message: 'Internal error' });
+
+  const invalid = await rpc.handlePayload('synthetic-secret: invalid JSON');
+  assert.deepEqual(invalid.body.error, { code: -32700, message: 'Parse error' });
+});
+
+test('sanitizes batch errors without responding to failed notifications', async () => {
+  const rpc = new RpcEndpoint();
+  rpc.addMethod('fail', () => { throw new Error('synthetic-secret'); });
+  rpc.addMethod('ok', () => 'ok');
+  const response = await rpc.handlePayload([
+    { jsonrpc: '2.0', method: 'fail', id: 1 },
+    { jsonrpc: '2.0', method: 'fail' },
+    { jsonrpc: '2.0', method: 'ok', id: 2 },
+  ]);
+  assert.deepEqual(response.body, [
+    { jsonrpc: '2.0', id: 1, error: { code: -32603, message: 'Internal error' } },
+    { jsonrpc: '2.0', id: 2, result: 'ok' },
+  ]);
+});
+
+test('allows explicit local-debug opt-out of error sanitization', async () => {
+  const rpc = new RpcEndpoint(null, { sanitizeErrors: false });
+  rpc.addMethod('fail', () => {
+    throw Object.assign(new Error('synthetic-secret'), { data: { debug: true } });
+  });
+  const response = await rpc.handlePayload({
+    jsonrpc: '2.0', method: 'fail', id: 1,
+  });
+  assert.deepEqual(response.body.error, {
+    code: -32603, message: 'synthetic-secret', data: { debug: true },
+  });
+  const invalid = await rpc.handlePayload('invalid JSON');
+  assert.equal(invalid.body.error.code, -32700);
+  assert.equal(typeof invalid.body.error.data.message, 'string');
+});
+
+test('sanitizes HTTP adapter failures but preserves the body-size error', async () => {
+  for (const sanitizeErrors of [undefined, false]) {
+    const endpoint = {
+      options: { sanitizeErrors },
+      async handlePayload() { throw new Error('synthetic-secret'); },
+    };
+    const request = Object.assign(Readable.from(['{}']), {
+      method: 'POST', url: '/rpc', headers: { host: 'localhost' },
+    });
+    const response = {
+      setHeader() {},
+      end(body) { this.body = JSON.parse(body); },
+    };
+    await createHttpHandler(endpoint)(request, response);
+    assert.equal(response.statusCode, 500);
+    assert.deepEqual(response.body.error, {
+      code: -32603,
+      message: sanitizeErrors === false ? 'synthetic-secret' : 'Internal error',
+    });
+  }
+
+  const request = Object.assign(Readable.from(['{}']), {
+    method: 'POST', url: '/rpc', headers: { host: 'localhost' },
+  });
+  const response = {
+    setHeader() {},
+    end(body) { this.body = JSON.parse(body); },
+  };
+  await createHttpHandler(new RpcEndpoint(), { maxBodyBytes: 1 })(request, response);
+  assert.equal(response.statusCode, 413);
+  assert.deepEqual(response.body.error, {
+    code: -32600, message: 'Request body too large',
+  });
 });

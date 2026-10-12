@@ -19,6 +19,13 @@ Express integration remains available in `rpc-express-toolkit`.
 
 The public API remains on the `0.x` version line and may evolve before `1.0.0`.
 
+### Release 0.2.2 — 2026-10-12
+
+This patch sanitizes unexpected RPC errors by default, preserves explicit public
+application errors, and consistently rejects invalid envelopes with a null
+response ID, including non-finite numeric IDs. `sanitizeErrors: false` is an
+explicit local-debugging opt-out. Existing handler signatures are unchanged.
+
 ## Which Package Should I Use?
 
 - Use `rpc-node-toolkit` if you want framework-agnostic Node.js or plain `node:http`.
@@ -38,8 +45,8 @@ Requirements:
 
 ## Compatibility
 
-`rpc-node-toolkit` is tested with Node.js 18, 20, 22, 24, and 26. Its CommonJS
-runtime supports both CommonJS and Node.js ESM consumers. See
+The CI matrix covers Node.js 18, 20, 22, 24, and 26. The CommonJS runtime
+supports both CommonJS and Node.js ESM consumers. See
 [Compatibility](docs/COMPATIBILITY.md) for the runtime, module, and packaged
 consumer matrices.
 
@@ -149,6 +156,10 @@ Middleware and handlers share the final per-request context. A handler may accep
 changes to `applicationContext`, `requestContext`, or the result of `afterCall`
 are propagated.
 
+Client `params` remain one object or array argument; positional values are not
+expanded into the server-owned context arguments. Authentication and authorization
+must use server-validated context, not identity claims supplied in `params`.
+
 For a hardened endpoint that does not need batch or introspection:
 
 ```js
@@ -174,6 +185,16 @@ Response:
 {"jsonrpc":"2.0","id":1,"result":{"ok":true,"params":{"value":123}}}
 ```
 
+### Request Contract
+
+Requests require `jsonrpc: "2.0"` and a nonempty string `method`. If present,
+`params` must be an object or array, not `null` or a scalar. IDs may be strings,
+finite numbers, or `null`: omitting `id` creates a notification, whereas
+`id: null` still receives a response. Invalid envelopes return `-32600` with
+`id: null`, including invalid entries in a batch; valid notifications never
+produce response entries. Schema validation failures return `-32602` with the
+original request ID. A successful null result remains `result: null`.
+
 ## Schema Validation
 
 Methods can include JSON Schema validation. Invalid params return JSON-RPC error `-32602`.
@@ -195,6 +216,16 @@ rpc.addMethod('add', {
 });
 ```
 
+## Error Handling
+
+Unexpected handler, middleware, and transport errors return `-32603` with
+`Internal error` and no internal details by default. Errors deliberately assigned
+a safe-integer `code` other than `-32603` retain their public `message` and `data`,
+including schema validation errors. Do not put secrets in application error data.
+The original exception is still available to `onError` middleware for server-side
+diagnostics. Set `{ sanitizeErrors: false }` on the endpoint only for local
+debugging to include unexpected messages and data; never use it in production.
+
 ## Safe Mode
 
 Use `RpcSafeEndpoint` when both sides support RPC Toolkit Safe Mode:
@@ -206,6 +237,10 @@ const rpc = new RpcSafeEndpoint();
 ```
 
 Safe Mode enables `X-RPC-Safe-Enabled` negotiation and recursive value encoding/decoding for strings, dates, and BigInt values.
+
+Encoding applies only inside `params`, `result`, and `error.data`. Envelope
+fields such as `method`, `id`, and `error.message` remain unchanged. Safe Mode
+preserves value types; it does not provide authentication or encryption.
 
 ## Examples
 
